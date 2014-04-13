@@ -1,4 +1,12 @@
+<?php
 
+$o = $_GET['o'];
+$h = explode(',', $_GET['h']);
+$d = $_GET['d'];
+
+$city = $_GET['city'];
+
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -128,10 +136,10 @@
                   items.push( "<thead><tr><th>Object</th><th data-defaultsort=\"desc\">Size(m) low</th><th>Size(m) high</th><th>Distance(km)</th></tr></thead>" );
                   items.push( "<tbody>" );
                   $.each( data, function( key, val ) {
-                    var url = "<a href='empathize.php?city="+city+"&o="+val.object+"&h="+val.H+"&d="+val.distance + "'>"+val.object+'</a>';
+                    var url = "<a href='?o="+val.object+"&h="+val.H+"&d="+val.distance + "'>"+val.object+'</a>';
 
                     var freebase = 'https://www.googleapis.com/freebase/v1/mqlread?query=[{  "name": null,  "/location/location/area": null,  "/architecture/structure/height_meters": null,  "/architecture/structure/height_meters<": '+val.H[0]+',  "/location/location/geolocation": {    "latitude": null,    "longitude": null  },  "/location/location/containedby|=": [    "'+city+'"  ],  "sort": "-/architecture/structure/height_meters",  "limit":1}]&cursor';
-                    //url = "<a href='"+freebase+"'>"+val.object+'</a>';
+                    url = "<a href='"+freebase+"'>"+val.object+'</a>';
                     items.push( "<tr><td>" + url + "</td><td>"+ Math.round(val.H[0],2) +"</td><td>"+ Math.round(val.H[1],2) +"</td><td>"+ Math.round(val.distance,2) +"</td></tr>" );
                   });
                  items.push( "</tbody>" );
@@ -152,9 +160,7 @@
       <div class="container">
         <nav class="blog-nav">
           <a class="blog-nav-item active" href="#">DOWN TO EARTH</a>
-          <a class="blog-nav-item" href="#">ABOUT</a>
-
-          <a class="blog-nav-item" style="float:right">Location: <span id="status">checking...</span></a>
+          <a class="blog-nav-item" href="#">ABOUT</a>          
         </nav>        
       </div>
     </div>
@@ -170,9 +176,13 @@
         <div class="col-sm-8 blog-main">
 
           <div class="blog-post">
-            <h1>Near Earth Objects</h1>
+            <h1><?php echo $o ?></h1>
 
-            <div id="data"><i>loading data</i></div>            
+            <p>Your current city is <?php echo $city ?></p>
+
+            <p id='measure'>              
+            </p>
+
             
           </div><!-- /.blog-post -->
 
@@ -212,6 +222,63 @@
     <script src="js/bootstrap.min.js"></script>
     <script src='js/moment.min.js'></script>
     <script src='js/bootstrap-sortable.js'></script>
+    <script src='js/mustache.js'></script>
+
+    <script id="template" type="x-tmpl-mustache">
+      The tallest building in {{ city }} is the {{ attraction }}, with height {{ height }} meters.
+      <img src={{ img }} />
+      <br/>
+      The asteroid is 3.4 the size of the {{ attraction }}.
+    </script>
+
+    <script>
+
+    function get_tallest_attraction(city)
+    { if (city == '') { 
+        return null; 
+      }
+      var freebase = 'https://www.googleapis.com/freebase/v1/mqlread?query=[{ "id":null, "name": null,  "/location/location/area": null,  "/architecture/structure/height_meters": null,  "/architecture/structure/height_meters>": 0,  "/location/location/geolocation": {    "latitude": null,    "longitude": null  },  "/location/location/containedby|=": [    "'+city+'"  ],  "sort": "-/architecture/structure/height_meters",  "limit":1}]&cursor';
+      console.log(freebase);
+      var ret = {
+          height : null,
+          lat : null,
+          lg : null,
+          name : null,
+          id : null
+        }
+
+      $.getJSON( freebase, function( data ) {
+        console.log(data);
+        ret.height = data.result[0]["/architecture/structure/height_meters"];
+        ret.lat = data.result[0]["/location/location/geolocation"]["latitude"];
+        ret.lg = data.result[0]["/location/location/geolocation"]["longitude"];
+        ret.name = data.result[0]["name"];        
+        ret.id = data.result[0]["id"];     
+        render(ret);   
+      });
+
+      return ret;
+    }
+
+    var ret = get_tallest_attraction(<?php echo '"' . $city . '"';?>);
+    console.log(ret);
+
+    function render(ret)
+    {
+      //alert(attraction);
+        var template = $('#template').html();
+        Mustache.parse(template);   // optional, speeds up future uses
+        var rendered = Mustache.render(template, {
+          attraction: ret.name,
+          height: ret.height,
+          city: <?php echo '"' . $city . '"'; ?>,
+          img: "https://www.googleapis.com/freebase/v1/image/" + ret.id
+        });
+
+        $("#measure").html(rendered);
+    }
+    
+    </script>
 
   </body>
 </html>
