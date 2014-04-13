@@ -16,3 +16,4 @@ Not empty height meters
     "sort": "-/architecture/structure/height_meters",
     "limit": 1
   }]
+[example](http://www.freebase.com/query?autorun=1&q=%5B%7B%22id%22:%22/m/026ydc%22,%22name%22:null,%22/architecture/structure/height_meters%22:%5B%5D%7D%5D)
