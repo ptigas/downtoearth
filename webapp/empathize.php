@@ -176,13 +176,11 @@ $city = $_GET['city'];
         <div class="col-sm-8 blog-main">
 
           <div class="blog-post">
-            <h1><?php echo $o ?></h1>
-
-            <p>Your current city is <?php echo $city ?></p>
+            <h1>Asteroid <?php echo $o ?></h1>            
 
             <p id='measure'>              
             </p>
-
+            
             
           </div><!-- /.blog-post -->
 
@@ -225,10 +223,18 @@ $city = $_GET['city'];
     <script src='js/mustache.js'></script>
 
     <script id="template" type="x-tmpl-mustache">
-      The tallest building in {{ city }} is the {{ attraction }}, with height {{ height }} meters.
-      <img src={{ img }} />
-      <br/>
-      The asteroid is 3.4 the size of the {{ attraction }}.
+      <div class="row" style='background:#eee; padding:10px; color:#666'>
+        <div class="col-md-10">The tallest building in {{ city }} is the {{ attraction }}, with height <span style='font-size:20px; color:red'><b>{{ height }} meters</b></span>.</div>
+        <div class="col-md-2"><img src={{ img }} /></div>
+      </div>
+              
+      <div style='font-size:35px; margin-top:20px'>This asteroid is <span style='color:black'><b>{{ ratio }}</b></span> times the size of the {{ attraction }}.</div>
+
+      <div style='text-align:center;'>
+        <a href="smashit.php" style='position:relative; top:50px; padding-bottom:10px'>
+          <img src="img/smashit.gif" />
+        </a>
+      </div>
     </script>
 
     <script>
@@ -244,7 +250,8 @@ $city = $_GET['city'];
           lat : null,
           lg : null,
           name : null,
-          id : null
+          id : null,
+          ratio: null
         }
 
       $.getJSON( freebase, function( data ) {
@@ -271,6 +278,7 @@ $city = $_GET['city'];
         var rendered = Mustache.render(template, {
           attraction: ret.name,
           height: ret.height,
+          ratio: (<?php echo ($h[0]+$h[1])/2.0 ?>/ret.height).toFixed(2),
           city: <?php echo '"' . $city . '"'; ?>,
           img: "https://www.googleapis.com/freebase/v1/image/" + ret.id
         });
