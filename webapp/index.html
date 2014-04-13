@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+        <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+        <link rel="stylesheet" href="css/normalize.css">
+        <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+
+
+        <article>
+            <p>Finding your location: <span id="status">checking...</span></p>
+        </article>
+
+        <script>            
+
+            function success(position) {
+              var geocoder;
+              geocoder = new google.maps.Geocoder();
+              var s = document.querySelector('#status');
+              
+              if (s.className == 'success') {
+                // not sure why we're hitting this twice in FF, I think it's to do with a cached result coming back    
+                return;
+              }
+              
+              s.innerHTML = "found you!";
+              s.className = 'success';
+              
+              var mapcanvas = document.createElement('div');
+              mapcanvas.id = 'mapcanvas';
+              mapcanvas.style.height = '400px';
+              mapcanvas.style.width = '560px';
+                
+              document.querySelector('article').appendChild(mapcanvas);
+              
+              var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+              var city;
+              geocoder.geocode({'latLng': latlng}, function(results, status) {
+                  if (status == google.maps.GeocoderStatus.OK) {
+                  console.log(results)
+                    if (results[1]) {
+                     //formatted address
+                    //find country name
+                    for (var i=0; i<results[0].address_components.length; i++) {
+                        for (var b=0;b<results[0].address_components[i].types.length;b++) {
+
+                        //there are different types that might hold a city admin_area_lvl_1 usually does in come cases looking for sublocality type will be more appropriate
+                            if (results[0].address_components[i].types[b] == "locality") {
+                                //this is the object you are looking for
+                                city = results[0].address_components[i];
+                                get_data(city.short_name);
+                                break;
+                            }
+                        }
+                    }
+                    //city data
+                    //alert(city.short_name);
+
+
+                    } else {
+                      alert("No results found");
+                    }
+                  } else {
+                    alert("Geocoder failed due to: " + status);
+                  }
+                });
+              console.log(position.coords);
+
+              var myOptions = {
+                zoom: 15,
+                center: latlng,
+                mapTypeControl: false,
+                navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+              };
+              var map = new google.maps.Map(document.getElementById("mapcanvas"), myOptions);
+              
+              var marker = new google.maps.Marker({
+                  position: latlng, 
+                  map: map, 
+                  title:"You are here! (at least within a "+position.coords.accuracy+" meter radius)"
+              });
+            }
+
+            function error(msg) {
+              var s = document.querySelector('#status');
+              s.innerHTML = typeof msg == 'string' ? msg : "failed";
+              s.className = 'fail';
+              
+              // console.log(arguments);
+            }
+
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(success, error);
+            } else {
+              error('not supported');
+            }
+
+        </script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.min.js"><\/script>')</script>
+        <script src="js/plugins.js"></script>
+        <script src="js/main.js"></script>
+
+        <script>
+        function get_data(city){
+            $.getJSON( "js/data.json", function( data ) {
+                  var items = [];
+                  $.each( data, function( key, val ) {
+                    var url = "<a href='?o="+val.object+"&h="+val.H+"&d="+val.distance + "'>"+val.object+'</a>';
+
+                    var freebase = 'https://www.googleapis.com/freebase/v1/mqlread?query=[{  "name": null,  "/location/location/area": null,  "/architecture/structure/height_meters": null,  "/architecture/structure/height_meters<": '+val.H[0]+',  "/location/location/geolocation": {    "latitude": null,    "longitude": null  },  "/location/location/containedby|=": [    "'+city+'"  ],  "sort": "-/architecture/structure/height_meters",  "limit":1}]&cursor';
+                    url = "<a href='"+freebase+"'>"+val.object+'</a>';
+                    items.push( "<tr><td>" + url + "</td><td>"+ val.H +"</td><td>"+ val.distance +"</td></tr>" );
+                  });
+                 
+                  $( "<table/>", {
+                    "class": "data",
+                    html: items.join( "" )
+                  }).appendTo( "body" );
+                });
+        }
+        </script>
+
+        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
+        <script>
+            (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+            function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+            e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+            e.src='//www.google-analytics.com/analytics.js';
+            r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+            ga('create','UA-XXXXX-X');ga('send','pageview');
+        </script>
+    </body>
+</html>
