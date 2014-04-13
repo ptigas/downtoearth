@@ -1,4 +1,15 @@
+<?php
 
+$lat = $_GET['lat'];
+$lg = $_GET['lg'];
+$d = $_GET['d'];
+$o = $_GET['o'];
+
+$city = $_GET['city'];
+
+$crater = ($d*12)/1000.0;
+
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -128,10 +139,10 @@
                   items.push( "<thead><tr><th>Object</th><th data-defaultsort=\"desc\">Size(m) low</th><th>Size(m) high</th><th>Distance(km)</th></tr></thead>" );
                   items.push( "<tbody>" );
                   $.each( data, function( key, val ) {
-                    var url = "<a href='empathize.php?city="+city+"&o="+val.object+"&h="+val.H+"&d="+val.distance + "'>"+val.object+'</a>';
+                    var url = "<a href='?o="+val.object+"&h="+val.H+"&d="+val.distance + "'>"+val.object+'</a>';
 
                     var freebase = 'https://www.googleapis.com/freebase/v1/mqlread?query=[{  "name": null,  "/location/location/area": null,  "/architecture/structure/height_meters": null,  "/architecture/structure/height_meters<": '+val.H[0]+',  "/location/location/geolocation": {    "latitude": null,    "longitude": null  },  "/location/location/containedby|=": [    "'+city+'"  ],  "sort": "-/architecture/structure/height_meters",  "limit":1}]&cursor';
-                    //url = "<a href='"+freebase+"'>"+val.object+'</a>';
+                    url = "<a href='"+freebase+"'>"+val.object+'</a>';
                     items.push( "<tr><td>" + url + "</td><td>"+ Math.round(val.H[0],2) +"</td><td>"+ Math.round(val.H[1],2) +"</td><td>"+ Math.round(val.distance,2) +"</td></tr>" );
                   });
                  items.push( "</tbody>" );
@@ -152,9 +163,7 @@
       <div class="container">
         <nav class="blog-nav">
           <a class="blog-nav-item active" href="#">DOWN TO EARTH</a>
-          <a class="blog-nav-item" href="#">ABOUT</a>
-
-          <a class="blog-nav-item" style="float:right">Location: <span id="status">checking...</span></a>
+          <a class="blog-nav-item" href="#">ABOUT</a>          
         </nav>        
       </div>
     </div>
@@ -170,16 +179,16 @@
         <div class="col-sm-8 blog-main">
 
           <div class="blog-post">
-            <h1>Near Earth Objects</h1>
-
-            <div id="data"><i>loading data</i></div>            
+            <p id='measure'>              
+            </p>
+            
             
           </div><!-- /.blog-post -->
 
         </div><!-- /.blog-main -->
 
         <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
-          <div class="sidebar-module sidebar-module-inset">            
+          <div class="sidebar-module sidebar-module-inset">
             <h4>Down to earth!</h4>
             <p><em>Down to earth takes numbers and uses metaphors to give back personalised visual interpretations.</em></p>
           </div>
@@ -212,6 +221,65 @@
     <script src="js/bootstrap.min.js"></script>
     <script src='js/moment.min.js'></script>
     <script src='js/bootstrap-sortable.js'></script>
+    <script src='js/mustache.js'></script>
+
+    <script id="template" type="x-tmpl-mustache">
+      <div style='font-size:35px; margin-top:20px'>This asteroid {{ asteroid }} hit {{ attraction }} and killed {{ killed }} people.</div>      
+      </div>
+    </script>
+
+    <script>
+
+    function get_city_details(city)
+    { 
+      if (city == '') { 
+        return null; 
+      }
+      var freebase = 'https://www.googleapis.com/freebase/v1/mqlread?query=[{    "name": "' + city + '",    "ns0:name": null,    "/location/location/area": null, "/location/statistical_region/population": [{      "number": null,      "sort": "-number",      "limit": 1    }],    "limit": 1  }]&cursor';
+      console.log(freebase);
+      var ret = {
+          height : null,
+          lat : null,
+          lg : null,
+          name : null,
+          id : null,
+          ratio: null
+        }
+
+      $.getJSON( freebase, function( data ) {
+        console.log(data);
+
+        var area = data.result[0]["/location/location/area"];
+        var pop = data.result[0]["/location/statistical_region/population"][0]["number"];        
+
+        var killed = (pop * <?php echo 3.14*$crater; ?>) / area;
+
+        var template = $('#template').html();
+        Mustache.parse(template);   // optional, speeds up future uses
+        var rendered = Mustache.render(template, {
+          killed: killed.toFixed(0),
+          asteroid: <?php echo '"'.$o.'"'; ?>,
+          attraction: <?php echo '"'.$_GET['a'].'"'; ?>
+        });
+
+        $("#measure").html(rendered);
+        
+        /*
+        ret.height = data.result[0]["/architecture/structure/height_meters"];
+        ret.lat = data.result[0]["/location/location/geolocation"]["latitude"];
+        ret.lg = data.result[0]["/location/location/geolocation"]["longitude"];
+        ret.name = data.result[0]["name"];        
+        ret.id = data.result[0]["id"];     
+        render(ret);   */
+      });
+
+      return ret;
+    }
+
+    var ret = get_city_details(<?php echo '"' . $city . '"';?>);
+    console.log(ret);
+    
+    </script>
 
   </body>
 </html>

@@ -17,7 +17,7 @@ $city = $_GET['city'];
     <meta name="author" content="">
     <link rel="shortcut icon" href="../../assets/ico/favicon.ico">
 
-    <title>Down To Earth | Nasa Space App Challenge 2014</title>
+    <title>Down To Earth | From space data to ground knowledge.</title>
 
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -188,8 +188,8 @@ $city = $_GET['city'];
 
         <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
           <div class="sidebar-module sidebar-module-inset">
-            <h4>About</h4>
-            <p>Etiam porta <em>sem malesuada magna</em> mollis euismod. Cras mattis consectetur purus sit amet fermentum. Aenean lacinia bibendum nulla sed consectetur.</p>
+            <h4>Down to earth!</h4>
+            <p><em>Down to earth takes numbers and uses metaphors to give back personalised visual interpretations.</em></p>
           </div>
           <div class="sidebar-module">            
           <div class="sidebar-module">            
@@ -231,7 +231,7 @@ $city = $_GET['city'];
       <div style='font-size:35px; margin-top:20px'>This asteroid is <span style='color:black'><b>{{ ratio }}</b></span> times the size of the {{ attraction }}.</div>
 
       <div style='text-align:center;'>
-        <a href="smashit.php" style='position:relative; top:50px; padding-bottom:10px'>
+        <a href="{{ smash }}" style='position:relative; top:50px; padding-bottom:10px'>
           <img src="img/smashit.gif" />
         </a>
       </div>
@@ -280,6 +280,7 @@ $city = $_GET['city'];
           height: ret.height,
           ratio: (<?php echo ($h[0]+$h[1])/2.0 ?>/ret.height).toFixed(2),
           city: <?php echo '"' . $city . '"'; ?>,
+          smash: "smashit.php?a="+ret.name+"&lat="+ret.lat+"&lg="+ret.lg+"&d="+<?php echo ($h[0]+$h[1])/2.0 ?> +"&o="+<?php echo '"'.$o.'"' ?>+"&city=" + <?php echo '"' . $city . '"'; ?>,
           img: "https://www.googleapis.com/freebase/v1/image/" + ret.id
         });
 
